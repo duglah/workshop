@@ -83,4 +83,84 @@ GLuint createProgram(const char* pVertexSource, const char* pFragmentSource) {
     return program;
 }
 
-//Code ab hier:
+char gVertexShader[] =
+    "attribute vec4 vPosition;\n"
+    "void main() {\n"
+    "  gl_Position = vPosition;\n"
+    "}\n";
+
+char gFragmentShader[] =
+    "precision mediump float;\n"
+	"uniform vec4 vColor;\n"
+    "void main() {\n"
+    "  gl_FragColor = vColor;\n"
+    "}\n";
+
+
+
+GLuint gProgram;
+GLuint gvPositionHandle;
+GLuint gvColorHandle;
+
+bool setupGraphics(int w, int h) {
+    gProgram = createProgram(gVertexShader, gFragmentShader);
+    if (!gProgram) {
+        return false;
+    }
+
+    glViewport(0, 0, w, h);
+
+    glClearColor(1.0f,1.0f,1.0f,1.0f);
+    return true;
+}
+
+GLfloat gTriangleVertices[] = {
+		0.0f, 0.5f,
+		-0.5f, -0.5f,
+        0.5f, -0.5f
+};
+
+GLfloat gColor[] = {
+		1.0f,0.0f,0.0f,1.0f
+};
+
+const GLushort gTriangleDrawOrder[] ={0,1,2};
+
+void renderFrame() {
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(gProgram);
+
+    gvPositionHandle = glGetAttribLocation(gProgram, "vPosition");
+    glVertexAttribPointer(gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
+    glEnableVertexAttribArray(gvPositionHandle);
+
+    gvColorHandle = glGetUniformLocation(gProgram,"vColor");
+    glUniform4fv(gvColorHandle,1,gColor);
+
+    //glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_SHORT,gTriangleDrawOrder);
+}
+
+extern "C" {
+    JNIEXPORT void JNICALL Java_com_example_helloopengljni_CustomRenderer_init(JNIEnv * env, jobject obj,  jint width, jint height);
+    JNIEXPORT void JNICALL Java_com_example_helloopengljni_CustomRenderer_step(JNIEnv * env, jobject obj);
+    JNIEXPORT void JNICALL Java_com_example_helloopengljni_HelloOpenGLJNIActivity_setColor(JNIEnv* env, jobject obj,jfloat r, jfloat g, jfloat b);
+};
+
+JNIEXPORT void JNICALL Java_com_example_helloopengljni_CustomRenderer_init(JNIEnv * env, jobject obj,  jint width, jint height)
+{
+    setupGraphics(width, height);
+}
+
+JNIEXPORT void JNICALL Java_com_example_helloopengljni_CustomRenderer_step(JNIEnv * env, jobject obj)
+{
+    renderFrame();
+}
+
+JNIEXPORT void JNICALL Java_com_example_helloopengljni_HelloOpenGLJNIActivity_setColor(JNIEnv* env, jobject obj,jfloat r, jfloat g, jfloat b){
+	gColor[0] = r;
+	gColor[1] = g;
+	gColor[2] = b;
+}
